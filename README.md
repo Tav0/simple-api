@@ -30,38 +30,38 @@ Create the authentication API.
 
 Your API should support the following operations:
 
-GET
++ GET
 
-/api/users          - return the first 10 users.
-/api/users?page=1   - return users 11-20
-/api/users?page=n   - return users 10*n + 1 ... 10*n + 10
-/api/users/:id      - get information about a user
+    /api/users          - return the first 10 users.
+    /api/users?page=1   - return users 11-20
+    /api/users?page=n   - return users 10*n + 1 ... 10*n + 10
+    /api/users/:id      - get information about a user
 
-POST
-/api/users          - create a new user.
-/api/login          - authenticate as a user.
++ POST
 
-PUT
-/api/users/:id      - update information for user id
+    /api/users          - create a new user.
+    /api/login          - authenticate as a user.
 
-All operations except for the POSTs should require authentication.
++ PUT
+
+    /api/users/:id      - update information for user id
+
++ All operations except for the POSTs should require authentication.
 The operations that take an :id should check that either the
 id belongs to an admin or that it is the id of the requesting user.
 
-Note:
-
-Your database code should be clearly separated from the API code.
++ Your database code should be clearly separated from the API code.
 Keep your db code in db/queries.js for which you will find a stub
 that shows you the six methods my sample solution implements.
 
-To implement authentication, use passport.
++ To implement authentication, use passport.
 api.js contains some boilerplate code already to enable session
 management and install the passport middleware.
 
-You will need to implement a LocalStrategy in api/users.js and make
++ You will need to implement a LocalStrategy in api/users.js and make
 express use it.
 
-To add a middleware that ensures the user is authenticated when an
++ To add a middleware that ensures the user is authenticated when an
 API entry point is hit, do not use the connect-ensure-login npm,
 because it is intended for pages needing redirection upon 
 lack of authentication.  Instead, write your own connect-style
@@ -72,8 +72,10 @@ Step 3:
 
 When done, you run the tests like so:
 
+```
     $ mysql -u... -p... db2 < sql/createdb.sql 
     $ node_modules/.bin/jasmine spec/userapitests.js
+```
 
 (always recreate the database, the tests assume an empty table)
 
