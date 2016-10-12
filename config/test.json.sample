@@ -1,0 +1,11 @@
+
+change the file, remove this line, and rename to test.json
+
+{
+    "dbinfo" : {
+        "host": "localhost",
+        "user": "............",
+        "password": "............",
+        "database": "db2"  <- check this
+    }
+}
