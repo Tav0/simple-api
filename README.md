@@ -32,19 +32,19 @@ Your API should support the following operations:
 
 + GET
 
-    /api/users          - return the first 10 users.
-    /api/users?page=1   - return users 11-20
-    /api/users?page=n   - return users 10*n + 1 ... 10*n + 10
-    /api/users/:id      - get information about a user
+    - `/api/users`          - return the first 10 users.
+    - `/api/users?page=1`   - return users 11-20
+    - `/api/users?page=n`   - return users 10*n + 1 ... 10*n + 10
+    - `/api/users/:id`      - get information about a user
 
 + POST
 
-    /api/users          - create a new user.
-    /api/login          - authenticate as a user.
+    - `/api/users`          - create a new user.
+    - `/api/login`          - authenticate as a user.
 
 + PUT
 
-    /api/users/:id      - update information for user id
+    - `/api/users/:id`      - update information for user id
 
 + All operations except for the POSTs should require authentication.
 The operations that take an :id should check that either the
