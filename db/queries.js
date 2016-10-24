@@ -1,5 +1,6 @@
 const Promise = require('bluebird') // override ES6 Promise to be able to use '.using'
 const dbConn = require('./connection')
+const db = require('../models')
 
 // look up user by id
 // return (id, username, firstname, lastname, email, admin)
@@ -17,6 +18,18 @@ function insertNewUser({ username, firstname, lastname, email, password, admin }
 
 // appoint a user to be an admin
 function appointAdmin(userid) {
+    db.User.findOne(
+        {
+            where: {
+                id: userid
+            }
+        }
+    )
+    .then(function(user) {
+        user.update({
+            admin: true
+        });
+    });
 }
 
 // update a user's information

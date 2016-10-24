@@ -4,8 +4,10 @@
 const express = require('express');
 const passport = require('passport');
 const bodyParser = require('body-parser');
+const db = require('./models');
 const app = express();
 
+SALT_WORK_FACTOR = 12;
 // configure body parser; this middleware module will parse the body of
 // requests to retrieve parameters passed to REST calls.  We support
 // both URL-encoded bodies and JSON bodies.
@@ -37,4 +39,3 @@ const port     = process.env.PORT || 3000
 app.use('/api', require('./api/'));
 
 module.exports = app
-

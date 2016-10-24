@@ -1,0 +1,9 @@
+{
+    "dbinfo" : {
+        "host": "localhost",
+        "user": "tavo",
+        "password": "Lgust@vo23892389",
+        "database": "db1",
+        "dialect": "mysql"
+    }
+}

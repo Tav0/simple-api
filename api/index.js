@@ -3,11 +3,12 @@
  */
 const express  = require('express');
 const passport = require('passport');
+const passportConfig = require('../passport.js')
 
 var apirouter = express.Router();
 
 apirouter.get('/', function(req, res) {
-	res.json({ status : true, message: 'API is accessible' });	
+    res.json({ status : true, message: 'API is accessible' });	
 });
 
 apirouter.use('/users', require('./users'))
@@ -22,5 +23,5 @@ apirouter.post('/login',
         res.json({ message: "you are successfully authenticated" })
     }
 )
- 
+
 module.exports = apirouter

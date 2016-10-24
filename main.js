@@ -2,13 +2,27 @@ const nconf = require('nconf')
 
 nconf.argv()
     .env()
-    .file({ file: 'config/default.json' })
+    .file({ file: 'config/test.json' })
 
 // start the user REST API server
 const api = require('./api')
 
 const port = process.env.PORT || 3000;
 
-api.listen(port, () => {
-    console.log(`Server running on port ${port}`)
-})
+function startApp() {
+    api.listen(port, () => {
+        console.log(`Server running on port ${port}`)
+    });
+}
+
+//Create model table and admin account
+db
+    .sequelize
+    .sync({force: true})
+    .then(function(data) {
+        console.log("Drop old tables if found else sync models");
+        startApp();
+    })
+    .catch(function(err) {
+        console.log(err);
+    });
