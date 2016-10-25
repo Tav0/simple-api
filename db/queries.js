@@ -29,6 +29,10 @@ function appointAdmin(userid) {
         user.update({
             admin: true
         });
+    })
+    .catch( (err) => {
+        console.log('appoint admin queries');
+        console.log(err);
     });
 }
 

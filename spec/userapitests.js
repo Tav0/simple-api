@@ -113,13 +113,10 @@ function loginAs(user, password = makePassword(user.firstname)) {
     return authreq.post('/api/login')
                   .send({ username : user.username, password })
                   .then((res) => { 
-                      if (res.status == 401) {
-                          throw Error();
-                      }
-                      else {
-                          console.log(authreq);
+                      if (res.status == 401) 
+                          throw Error() 
+                      else
                           return authreq
-                      }
                   })
 }
 

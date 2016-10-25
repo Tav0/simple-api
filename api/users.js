@@ -3,7 +3,15 @@
  */
 const express  = require('express');
 const passport = require('passport');
+const passportConfig = require('../passport.js')
 const db = require('../models');
+const ensureLogin = (req, res, next) => {
+    if (req.isAuthenticated()) {
+        next();
+    } else {
+        res.status(403).json({ message: "Access denied"});
+    }
+}
 
 var apirouter = express.Router();
 
@@ -27,16 +35,25 @@ apirouter.route('/')
                         email: req.body.email
                     }
                 )
-                    .then(function(newUser) {
-                        res.json(
-                            {
-                                id: newUser.id
-                            }
-                        );
-                    });
+                .then(function(newUser) {
+                    res.json(
+                        {
+                            id: newUser.id
+                        }
+                    );
+                })
+                .catch( (err) => {;
+                    console.log('user err post json');
+                    console.log(err);
+
+                });
             } else {
                 res.status(409).json("User exists");
             }
+        })
+        .catch((err) => {
+            console.log("err for post user");
+            console.log(err);
         });
     })
     .get(function(req, res) {
@@ -58,6 +75,10 @@ apirouter.route('/')
                 }
 
                 res.json(users);
+            })
+            .catch( (err) => {
+                console.log("user pagination of first 10");
+                console.log(err);
             });
         } else {
             db.User.findAll(
@@ -77,49 +98,78 @@ apirouter.route('/')
                     });
                 }
                 res.json(users);
+            })
+            .catch( (err) => {
+                console.log("err of offset 10");
+                console.log(err);
             });
         }
     });
 
-apirouter.route('/:user_id')
-    .get(function(req, res) {
-        db.User.findOne(
-            {
-                where: {
-                    id: req.params.user_id
-                }
-            }
-        )
-        .then(function(user) {
-            if(user.flag){
-                res.json({
-                    username: user.username,
-                    firstname: user.firstname,
-                    lastname: user.lastname,
-                    email: user.email
-                });
+apirouter
+    .get('/:user_id',
+        ensureLogin,
+        (req, res) => {
+            if (req.user.admin != true && req.user.id != req.params.user_id) {
+                res.status(403).json({message: "User have not the right credentials"});
             } else {
-                res.status(403).json("Not authenticated");
-            }
-        })
-    })
-    .put(function(req, res) {
-        db.User.findOne(
-            {
-                where: {
-                    id: req.params.user_id
-                }
-            }
-        )
-        .then(function(user) {
-            user.update(
-                {
-                    password: req.body.password,
-                    lastname: req.body.lastname
+                db.User.findOne(
+                    {
+                        where: {
+                            id: req.user.id
+                        }
+                    }
+                )
+                .then( (user) => {
+                    res.json(
+                        {
+                            username: user.username,
+                            email: user.email,
+                            firstname: user.firstname,
+                            lastname: user.lastname,
+                            id: user.id
+                        }
+                    );
+                })
+                .catch( (user) => {
+                    console.log("user get id");
+                    console.log(user);
                 });
             }
-        );
-    });
+        }
+    );
 
+apirouter
+    .put('/:user_id',
+        ensureLogin,
+        (req, res) => {
+            if (req.user.admin != true && req.user.id != req.params.user_id) {
+                res.status(403).json({message: "User have not the right credentials"});
+            } else {
+                db.User.findOne(
+                    {
+                        where: {
+                            id: req.params.user_id
+                        }
+                    }
+                )
+                .then( (user) => {
+                    for(const key in req.body) {
+                        if(key !== 'id')
+                            user[key] = req.body[key] || user[key];
+                    }
+
+                    return user.save();
+                })
+                .then( () => {
+                    res.json({ message: "User updated" });
+                })
+                .catch( (err) => {
+                    console.log('put err');
+                    console.log(err);
+                })
+            }
+        }
+    );
 
 module.exports = apirouter

@@ -8,7 +8,7 @@ const passportConfig = require('../passport.js')
 var apirouter = express.Router();
 
 apirouter.get('/', function(req, res) {
-    res.json({ status : true, message: 'API is accessible' });	
+    res.json({status: true, message: 'API is accessible' });	
 });
 
 apirouter.use('/users', require('./users'))

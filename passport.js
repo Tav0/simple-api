@@ -6,12 +6,10 @@ passport.serializeUser(function(user, done) {
     done(null, user.id);
 });
 
-passport.deserializeUser(function(user, done) {
-    db.User.findById(
+passport.deserializeUser(function(id, done) {
+    db.User.findOne(
         {
-            where: {
-                id: user.id
-            }
+            where: { id }
         }
     )
     .then(function(user) {
@@ -24,9 +22,7 @@ passport.deserializeUser(function(user, done) {
 
 //Auth
 passport
-    .use(new LocalStrategy({
-        session: true
-    },
+    .use(new LocalStrategy(
         function(username, password, done) {
             db.User.findOne(
                 {
@@ -36,8 +32,11 @@ passport
                 }
             )
             .then(function(user) {
-                passwd = user ? user.password : ''
+                passwd = user ? user.password : '';
                 isMatch = db.User.validPassword(password, passwd, done, user);
+            })
+            .catch(function(err) {
+                return done(err)
             });
         })
     );

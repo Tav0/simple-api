@@ -51,12 +51,13 @@ module.exports = function(sequelize, DataTypes) {
             validPassword: function(password, passwd, done, user) {
                 bcrypt.compare(password, passwd, function(err, isMatch) {
 
-                    if (err) console.log(err)
-                    if (isMatch) {
-                        return done(null, user);
-                    } else {
-                        return done(null, false);
-                    }
+                    if (err) console.log(err);
+
+                     if (isMatch) {
+                         return done(null, user);
+                     } else {
+                         return done(null, false);
+                     }
                 });
             }
         }
@@ -69,12 +70,23 @@ module.exports = function(sequelize, DataTypes) {
             return salt;
         });
         bcrypt.hash(user.password, salt, null, function(err, hash) {
-            if (err) return err;
+            if (err) return fn(null, err);
 
             user.password = hash;
             return fn(null, user);
         });
     });
 
+    User.hook('beforeUpdate', function(user, fields, fn) {
+        const salt = bcrypt.genSalt(SALT_WORK_FACTOR, function(err, salt) {
+            return salt;
+        });
+        bcrypt.hash(user.password, salt, null, function(err, hash) {
+            if (err) return fn(null, err);
+
+            user.password = hash;
+            return fn(null, user);
+        });
+    });
     return User;
 };
