@@ -55,56 +55,67 @@ apirouter.route('/')
             console.log("err for post user");
             console.log(err);
         });
-    })
-    .get(function(req, res) {
-        if(JSON.stringify(req.query) === "{}") {
-            db.User.findAll(
-                {
-                    limit: 10
-                }
-            )
-            .then(function(users) {
-                users = [];
-                for(user in users) {
-                    users.push({
-                        username: user.username,
-                        firstname: user.firstname,
-                        lastname: user.lastname,
-                        email: user.email
-                    });
-                }
-
-                res.json(users);
-            })
-            .catch( (err) => {
-                console.log("user pagination of first 10");
-                console.log(err);
-            });
-        } else {
-            db.User.findAll(
-                {
-                    limit: 10,
-                    offset: (10 * req.query.page)
-                }
-            )
-            .then(function(users) {
-                users = [];
-                for(user in users) {
-                    users.push({
-                        username: user.username,
-                        firstname: user.firstname,
-                        lastname: user.lastname,
-                        email: user.email
-                    });
-                }
-                res.json(users);
-            })
-            .catch( (err) => {
-                console.log("err of offset 10");
-                console.log(err);
-            });
-        }
     });
+
+apirouter
+    .get('/',
+        ensureLogin,
+        (req, res) => {
+            if (req.user.admin != true && req.user.id != req.params.user_id) {
+                res.status(403).json({message: "User have not the right credentials"});
+            } else {
+                if(JSON.stringify(req.query) === "{}") {
+                    db.User.findAll(
+                        {
+                            limit: 10
+                        }
+                    )
+                    .then(function(users) {
+                        users = [];
+                        for(user in users) {
+                            users.push({
+                                username: user.username,
+                                firstname: user.firstname,
+                                lastname: user.lastname,
+                                email: user.email
+                            });
+                        }
+
+                        res.json(users);
+                    })
+                    .catch( (err) => {
+                        console.log("err pagination of first 10");
+                        console.log(err);
+                        res.json(err);
+                    });
+                } else {
+                    db.User.findAll(
+                        {
+                            limit: 10,
+                            offset: (10 * req.query.page)
+                        }
+                    )
+                    .then(function(users) {
+                        users = [];
+                        for(user in users) {
+                            users.push({
+                                username: user.username,
+                                firstname: user.firstname,
+                                lastname: user.lastname,
+                                email: user.email
+                            });
+                        }
+                        res.json(users);
+                    })
+                    .catch( (err) => {
+                        console.log("err of offset 10");
+                        console.log(err);
+                        res.json(err);
+                    });
+                }
+            }
+        }
+    );
 
 apirouter
     .get('/:user_id',

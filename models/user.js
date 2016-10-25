@@ -2,11 +2,6 @@ const bcrypt = require('bcrypt-nodejs');
 
 module.exports = function(sequelize, DataTypes) {
     var User = sequelize.define('User', {
-        flag: {
-            type: DataTypes.BOOLEAN,
-            allowNull: false,
-            defaultValue: false,
-        },
         admin: {
             type: DataTypes.BOOLEAN,
             allowNull: false,
