@@ -3,20 +3,20 @@ const passport = require('passport'),
     db = require('./models')
 
 passport.serializeUser(function(user, done) {
-    done(null, user.id);
+    done(null, user);
 });
 
-passport.deserializeUser(function(id, done) {
+passport.deserializeUser(function(user, done) {
     db.User.findOne(
         {
-            where: { id }
+            where: { id: user.id }
         }
     )
     .then(function(user) {
         done(null, user);
     })
     .catch(function(err) {
-        done(err, null)
+        done(err)
     });
 });
 
@@ -32,11 +32,22 @@ passport
                 }
             )
             .then(function(user) {
+                if(!user)
+                    done(null, false);
+
                 passwd = user ? user.password : '';
-                isMatch = db.User.validPassword(password, passwd, done, user);
+                db.User.validPassword(password, passwd,function(err,isMatch) {
+                    if(err)
+                        done(err);
+
+                    if(isMatch)
+                        done(null, user)
+
+                    done(null, false);
+                });
             })
             .catch(function(err) {
-                return done(err)
+                done(err)
             });
         })
     );

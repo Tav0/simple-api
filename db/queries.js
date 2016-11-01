@@ -18,7 +18,7 @@ function insertNewUser({ username, firstname, lastname, email, password, admin }
 
 // appoint a user to be an admin
 function appointAdmin(userid) {
-    db.User.findOne(
+    return db.User.findOne(
         {
             where: {
                 id: userid
@@ -26,13 +26,14 @@ function appointAdmin(userid) {
         }
     )
     .then(function(user) {
-        user.update({
-            admin: true
-        });
+        user.admin = true;
+        user.save();
+        return null;
     })
     .catch( (err) => {
         console.log('appoint admin queries');
         console.log(err);
+        return err;
     });
 }
 

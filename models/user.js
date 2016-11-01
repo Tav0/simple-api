@@ -45,14 +45,7 @@ module.exports = function(sequelize, DataTypes) {
         classMethods: {
             validPassword: function(password, passwd, done, user) {
                 bcrypt.compare(password, passwd, function(err, isMatch) {
-
-                    if (err) console.log(err);
-
-                     if (isMatch) {
-                         return done(null, user);
-                     } else {
-                         return done(null, false);
-                     }
+                    done(err, isMatch);
                 });
             }
         }
@@ -60,24 +53,24 @@ module.exports = function(sequelize, DataTypes) {
         dialect: 'mysql'
     });
 
-    User.hook('beforeCreate', function(user, fields, fn) {
+    User.hook('beforeCreate', function(user, options, fn) {
         const salt = bcrypt.genSalt(SALT_WORK_FACTOR, function(err, salt) {
             return salt;
         });
-        bcrypt.hash(user.password, salt, null, function(err, hash) {
-            if (err) return fn(null, err);
+        return bcrypt.hash(user.password, salt, null, function(err, hash) {
+            if (err) return fn(err);
 
             user.password = hash;
             return fn(null, user);
         });
     });
 
-    User.hook('beforeUpdate', function(user, fields, fn) {
+    User.hook('beforeUpdate', function(user, options, fn) {
         const salt = bcrypt.genSalt(SALT_WORK_FACTOR, function(err, salt) {
             return salt;
         });
-        bcrypt.hash(user.password, salt, null, function(err, hash) {
-            if (err) return fn(null, err);
+        return bcrypt.hash(user.password, salt, null, function(err, hash) {
+            if (err) return fn(err);
 
             user.password = hash;
             return fn(null, user);

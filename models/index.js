@@ -14,10 +14,12 @@ sequelize
     .authenticate()
     .then(function() {
         console.log("Sequelize authenticated");
+        return;
     })
     .catch((err) => {
         console.log("err in sequelize authenticate");
         console.log(err);
+        throw Error(err);
     });
 
 fs

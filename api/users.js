@@ -5,7 +5,11 @@ const express  = require('express');
 const passport = require('passport');
 const passportConfig = require('../passport.js')
 const db = require('../models');
+
+var apirouter = express.Router();
+
 const ensureLogin = (req, res, next) => {
+    debugger;
     if (req.isAuthenticated()) {
         next();
     } else {
@@ -13,11 +17,23 @@ const ensureLogin = (req, res, next) => {
     }
 }
 
-var apirouter = express.Router();
+const usersArr = (arrayUsers) => {
+    arr = [];
+
+    for(user of arrayUsers) {
+        arr.push({
+            username: user.username,
+            firstname: user.firstname,
+            lastname: user.lastname,
+            email: user.email
+        });
+    }
+        return arr;
+};
 
 apirouter.route('/')
     .post(function(req, res) {
-        db.User.find(
+        db.User.findOne(
             {
                 where: {
                     username: req.body.username
@@ -26,7 +42,7 @@ apirouter.route('/')
         )
         .then(function(user) {
             if(!user) {
-                db.User.create(
+                return db.User.create(
                     {
                         username: req.body.username,
                         password: req.body.password,
@@ -43,17 +59,14 @@ apirouter.route('/')
                     );
                 })
                 .catch( (err) => {;
-                    console.log('user err post json');
-                    console.log(err);
-
+                    res.status(400).json({ message: err });
                 });
             } else {
-                res.status(409).json("User exists");
+                return res.status(409).json({ message: "User exists" });
             }
         })
         .catch((err) => {
-            console.log("err for post user");
-            console.log(err);
+            res.status(407).json({ message: err });
         });
     });
 
@@ -61,56 +74,33 @@ apirouter
     .get('/',
         ensureLogin,
         (req, res) => {
-            if (req.user.admin != true && req.user.id != req.params.user_id) {
-                res.status(403).json({message: "User have not the right credentials"});
+            if (req.user.admin != true) {
+                return res.status(403).json({message: "User have not the right credentials"});
             } else {
                 if(JSON.stringify(req.query) === "{}") {
-                    db.User.findAll(
+                    return db.User.findAll(
                         {
                             limit: 10
                         }
                     )
                     .then(function(users) {
-                        users = [];
-                        for(user in users) {
-                            users.push({
-                                username: user.username,
-                                firstname: user.firstname,
-                                lastname: user.lastname,
-                                email: user.email
-                            });
-                        }
-
-                        res.json(users);
+                        res.json(usersArr(users));
                     })
                     .catch( (err) => {
-                        console.log("err pagination of first 10");
-                        console.log(err);
-                        res.json(err);
+                        res.status(400).json({ message: err });
                     });
                 } else {
-                    db.User.findAll(
+                    return db.User.findAll(
                         {
                             limit: 10,
                             offset: (10 * req.query.page)
                         }
                     )
                     .then(function(users) {
-                        users = [];
-                        for(user in users) {
-                            users.push({
-                                username: user.username,
-                                firstname: user.firstname,
-                                lastname: user.lastname,
-                                email: user.email
-                            });
-                        }
-                        res.json(users);
+                        res.json(usersArr(users));
                     })
                     .catch( (err) => {
-                        console.log("err of offset 10");
-                        console.log(err);
-                        res.json(err);
+                        res.status(400).json({ message: err });
                     });
                 }
             }
@@ -121,32 +111,41 @@ apirouter
     .get('/:user_id',
         ensureLogin,
         (req, res) => {
-            if (req.user.admin != true && req.user.id != req.params.user_id) {
-                res.status(403).json({message: "User have not the right credentials"});
-            } else {
-                db.User.findOne(
-                    {
-                        where: {
-                            id: req.user.id
-                        }
+            return db.User.count()
+                .then( (numUsers) => {
+                    if(numUsers < req.params.user_id || req.params.user_id <= 0) {
+                        return res.status(404).json({message: "User does not exist."});
                     }
-                )
-                .then( (user) => {
-                    res.json(
+
+                    if (req.user.admin != true && req.user.id != req.params.user_id) {
+                        return res.status(403).json({message: "Bad input."});
+                    }
+
+                    return db.User.findOne(
                         {
-                            username: user.username,
-                            email: user.email,
-                            firstname: user.firstname,
-                            lastname: user.lastname,
-                            id: user.id
+                            where: {
+                                id: req.params.user_id
+                            }
                         }
-                    );
+                    )
+                    .then( (user) => {
+                        res.json(
+                            {
+                                username: user.username,
+                                email: user.email,
+                                firstname: user.firstname,
+                                lastname: user.lastname,
+                                id: user.id
+                            }
+                        );
+                    })
+                    .catch( (err) => {
+                        res.status(404).json(err);
+                    });
                 })
-                .catch( (user) => {
-                    console.log("user get id");
-                    console.log(user);
+                .catch( err => {
+                    res.status(404).json(err);
                 });
-            }
         }
     );
 
@@ -154,32 +153,54 @@ apirouter
     .put('/:user_id',
         ensureLogin,
         (req, res) => {
-            if (req.user.admin != true && req.user.id != req.params.user_id) {
-                res.status(403).json({message: "User have not the right credentials"});
-            } else {
-                db.User.findOne(
-                    {
-                        where: {
-                            id: req.params.user_id
-                        }
-                    }
-                )
-                .then( (user) => {
-                    for(const key in req.body) {
-                        if(key !== 'id')
-                            user[key] = req.body[key] || user[key];
+            db.User.count()
+                .then( (numUsers) => {
+                    if(numUsers < req.params.user_id || req.params.user_id <= 0) {
+                        return res.status(404).json({message: "User does not exist."});
                     }
 
-                    return user.save();
+                    if (req.user.admin != true && req.user.id != req.params.user_id) {
+                        //the top lvl returns are being tests for promises
+                        return res.status(403).json({message: "User have not the right credentials"});
+                    }
+
+                    return db.User.findOne(
+                        {
+                            where: {
+                                id: req.params.user_id
+                            }
+                        }
+                    )
+                    .then( (user) => {
+                        for(const key in req.body) {
+
+                            if(key == "firstname" ||
+                               key == "lastname" ||
+                               key == "password" ||
+                               key == "username" ||
+                               key == "email") {
+
+                                user[key] = req.body[key] || user[key];
+                            }
+                        }
+                        user.save();
+                        return user.changed();
+                    })
+                    .then( (userUpdated) => {
+                        if(!userUpdated) {
+                            res.status(400).json({ message: "Bad input." });
+                        }
+                        res.json({ message: "User updated" });
+                    })
+                    .catch( (err) => {
+                        console.log('put err');
+                        console.log(err);
+                        res.json(400).json({ message: err });
+                    });
                 })
-                .then( () => {
-                    res.json({ message: "User updated" });
-                })
-                .catch( (err) => {
-                    console.log('put err');
-                    console.log(err);
-                })
-            }
+                .catch( err => {
+                    res.status(400).json({ message: err });
+                });
         }
     );
 

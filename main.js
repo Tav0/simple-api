@@ -24,5 +24,6 @@ db
         startApp();
     })
     .catch(function(err) {
-        console.log(err);
+        throw Error(err);
+        //console.log(err);
     });
