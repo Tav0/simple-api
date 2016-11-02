@@ -57,24 +57,27 @@ module.exports = function(sequelize, DataTypes) {
         const salt = bcrypt.genSalt(SALT_WORK_FACTOR, function(err, salt) {
             return salt;
         });
-        return bcrypt.hash(user.password, salt, null, function(err, hash) {
-            if (err) return fn(err);
+        bcrypt.hash(user.password, salt, null, function(err, hash) {
+            if (err) fn(err);
 
             user.password = hash;
-            return fn(null, user);
+            fn(null, user);
         });
     });
 
     User.hook('beforeUpdate', function(user, options, fn) {
-        const salt = bcrypt.genSalt(SALT_WORK_FACTOR, function(err, salt) {
-            return salt;
-        });
-        return bcrypt.hash(user.password, salt, null, function(err, hash) {
-            if (err) return fn(err);
+        if(options.fields.indexOf("password") !== -1) {
+            const salt = bcrypt.genSalt(SALT_WORK_FACTOR, function(err, salt) {
+                return salt;
+            });
+            return bcrypt.hash(user.password, salt, null, function(err, hash) {
+                if (err) fn(err);
 
-            user.password = hash;
-            return fn(null, user);
-        });
+                user.password = hash;
+                fn(null, user);
+            });
+        }
+        return fn(null, false);
     });
     return User;
 };

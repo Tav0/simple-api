@@ -18,7 +18,7 @@ function startApp() {
 //Create model table and admin account
 db
     .sequelize
-    .sync({force: true})
+    .sync({ force: true })
     .then(function(data) {
         console.log("Drop old tables if found else sync models");
         startApp();

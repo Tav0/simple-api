@@ -36,14 +36,14 @@ passport
                     done(null, false);
 
                 passwd = user ? user.password : '';
-                db.User.validPassword(password, passwd,function(err,isMatch) {
+                return db.User.validPassword(password, passwd,function(err,isMatch) {
                     if(err)
-                        done(err);
+                        return done(err);
 
                     if(isMatch)
-                        done(null, user)
+                        return done(null, user)
 
-                    done(null, false);
+                    return done(null, false);
                 });
             })
             .catch(function(err) {

@@ -9,10 +9,10 @@ const db = require('../models');
 var apirouter = express.Router();
 
 const ensureLogin = (req, res, next) => {
-    debugger;
     if (req.isAuthenticated()) {
         next();
     } else {
+        debugger;
         res.status(403).json({ message: "Access denied"});
     }
 }
@@ -25,10 +25,11 @@ const usersArr = (arrayUsers) => {
             username: user.username,
             firstname: user.firstname,
             lastname: user.lastname,
-            email: user.email
+            email: user.email,
+            id: user.id
         });
     }
-        return arr;
+    return arr;
 };
 
 apirouter.route('/')
@@ -52,14 +53,14 @@ apirouter.route('/')
                     }
                 )
                 .then(function(newUser) {
-                    res.json(
+                    return res.json(
                         {
                             id: newUser.id
                         }
                     );
                 })
                 .catch( (err) => {;
-                    res.status(400).json({ message: err });
+                    return res.status(400).json({ message: err });
                 });
             } else {
                 return res.status(409).json({ message: "User exists" });
@@ -74,35 +75,48 @@ apirouter
     .get('/',
         ensureLogin,
         (req, res) => {
-            if (req.user.admin != true) {
+            if (!req.user.admin) {
                 return res.status(403).json({message: "User have not the right credentials"});
+            }
+            const query = req.query.page;
+
+            if(!query || query === '0') {
+                return db.User.findAll(
+                    {
+                        limit: 10
+                    }
+                )
+                .then(function(result) {
+                    return res.json({
+                        users: usersArr(result),
+                        has_more: (result.length < 10) ? false : true
+                    });
+                })
+                .catch( (err) => {
+                    return res.status(404).json({
+                        message: "No more users.",
+                        has_more: false
+                    });
+                });
             } else {
-                if(JSON.stringify(req.query) === "{}") {
-                    return db.User.findAll(
-                        {
-                            limit: 10
-                        }
-                    )
-                    .then(function(users) {
-                        res.json(usersArr(users));
-                    })
-                    .catch( (err) => {
-                        res.status(400).json({ message: err });
+                db.User.findAll(
+                    {
+                        limit: 10,
+                        offset: (10 * req.query.page)
+                    }
+                )
+                .then(function(result) {
+                    return res.json({
+                        users: usersArr(result),
+                        has_more: (result.length < 10) ? false : true
                     });
-                } else {
-                    return db.User.findAll(
-                        {
-                            limit: 10,
-                            offset: (10 * req.query.page)
-                        }
-                    )
-                    .then(function(users) {
-                        res.json(usersArr(users));
-                    })
-                    .catch( (err) => {
-                        res.status(400).json({ message: err });
+                })
+                .catch( (err) => {
+                    return res.status(404).json({
+                        message: "No more users.",
+                        has_more: false
                     });
-                }
+                });
             }
         }
     );
@@ -111,25 +125,17 @@ apirouter
     .get('/:user_id',
         ensureLogin,
         (req, res) => {
-            return db.User.count()
-                .then( (numUsers) => {
-                    if(numUsers < req.params.user_id || req.params.user_id <= 0) {
-                        return res.status(404).json({message: "User does not exist."});
+            db.User.findOne(
+                {
+                    where: {
+                        id: req.params.user_id
                     }
-
-                    if (req.user.admin != true && req.user.id != req.params.user_id) {
-                        return res.status(403).json({message: "Bad input."});
-                    }
-
-                    return db.User.findOne(
-                        {
-                            where: {
-                                id: req.params.user_id
-                            }
-                        }
-                    )
-                    .then( (user) => {
-                        res.json(
+                }
+            )
+            .then( (user) => {
+                if (user) {
+                    if (req.user.admin || req.user.id === user.id) {
+                        return res.json(
                             {
                                 username: user.username,
                                 email: user.email,
@@ -138,14 +144,15 @@ apirouter
                                 id: user.id
                             }
                         );
-                    })
-                    .catch( (err) => {
-                        res.status(404).json(err);
-                    });
-                })
-                .catch( err => {
-                    res.status(404).json(err);
-                });
+                    }
+                    return res.status(403).json({message: "Bad permissions."});
+                }
+
+                return res.status(404).json({ message: "User not found." });
+            })
+            .catch( (err) => {
+                return res.status(404).json({ message: err });
+            });
         }
     );
 
@@ -153,55 +160,44 @@ apirouter
     .put('/:user_id',
         ensureLogin,
         (req, res) => {
-            db.User.count()
-                .then( (numUsers) => {
-                    if(numUsers < req.params.user_id || req.params.user_id <= 0) {
-                        return res.status(404).json({message: "User does not exist."});
+            db.User.findOne(
+                {
+                    where: {
+                        id: req.params.user_id
                     }
+                }
+            )
+            .then( (user) => {
+                if(!user) {
+                    return res.status(404).json({ message: "User not found." });
+                }
+                if(user.id !== req.user.id){
+                    return res.status(403).json({message: "Bad permissions."});
+                }
 
-                    if (req.user.admin != true && req.user.id != req.params.user_id) {
-                        //the top lvl returns are being tests for promises
-                        return res.status(403).json({message: "User have not the right credentials"});
+                for(const key in req.body) {
+
+                    if(key == "firstname" ||
+                       key == "lastname" ||
+                       key == "password" ||
+                       key == "username" ||
+                       key == "email") {
+
+                        user[key] = req.body[key] || user[key];
                     }
+                }
 
-                    return db.User.findOne(
-                        {
-                            where: {
-                                id: req.params.user_id
-                            }
-                        }
-                    )
-                    .then( (user) => {
-                        for(const key in req.body) {
+                user.save();
 
-                            if(key == "firstname" ||
-                               key == "lastname" ||
-                               key == "password" ||
-                               key == "username" ||
-                               key == "email") {
-
-                                user[key] = req.body[key] || user[key];
-                            }
-                        }
-                        user.save();
-                        return user.changed();
-                    })
-                    .then( (userUpdated) => {
-                        if(!userUpdated) {
-                            res.status(400).json({ message: "Bad input." });
-                        }
-                        res.json({ message: "User updated" });
-                    })
-                    .catch( (err) => {
-                        console.log('put err');
-                        console.log(err);
-                        res.json(400).json({ message: err });
-                    });
-                })
-                .catch( err => {
-                    res.status(400).json({ message: err });
-                });
+                if (!user.changed()) {
+                    return res.status(400).json({ message: "No update." });
+                }
+                return res.json({ message: "User updated." });
+            })
+            .catch( (err) => {
+                return res.json(404).json({ message: err });
+            });
         }
     );
 
-module.exports = apirouter
+module.exports = apirouter;

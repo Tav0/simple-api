@@ -27,11 +27,9 @@ function appointAdmin(userid) {
     )
     .then(function(user) {
         user.admin = true;
-        user.save();
-        return null;
+        return user.save();
     })
     .catch( (err) => {
-        console.log('appoint admin queries');
         console.log(err);
         return err;
     });
