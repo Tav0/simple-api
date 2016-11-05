@@ -5,6 +5,11 @@
         "password": "Lgust@vo23892389",
         "database": "db1",
         "dialect": "mysql",
-        "logging": false
+        "logging": false,
+        "pool": {
+            "max": 50,
+            "min": 15,
+            "idle": 10000
+        }
     }
 }

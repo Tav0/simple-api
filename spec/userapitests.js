@@ -210,7 +210,7 @@ describe("Test User Creation", function() {
         }).catch((err) => {
             done.fail();
         });
-    }, 20000)
+    }, 9000);
 
     it ("tests that user A cannot retrieve information about user B", function (done) {
         const id_usera = 1

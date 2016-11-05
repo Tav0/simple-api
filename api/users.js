@@ -12,7 +12,6 @@ const ensureLogin = (req, res, next) => {
     if (req.isAuthenticated()) {
         next();
     } else {
-        debugger;
         res.status(403).json({ message: "Access denied"});
     }
 }
@@ -34,6 +33,7 @@ const usersArr = (arrayUsers) => {
 
 apirouter.route('/')
     .post(function(req, res) {
+        debugger;
         db.User.findOne(
             {
                 where: {
@@ -71,6 +71,7 @@ apirouter.route('/')
         });
     });
 
+//
 apirouter
     .get('/',
         ensureLogin,
@@ -121,6 +122,7 @@ apirouter
         }
     );
 
+//Admins and owner of id can GET
 apirouter
     .get('/:user_id',
         ensureLogin,
@@ -156,6 +158,7 @@ apirouter
         }
     );
 
+//Owner of id can PUT
 apirouter
     .put('/:user_id',
         ensureLogin,

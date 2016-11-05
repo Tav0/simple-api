@@ -18,7 +18,6 @@ sequelize
     })
     .catch((err) => {
         console.log("err in sequelize authenticate");
-        console.log(err);
         throw Error(err);
     });
 

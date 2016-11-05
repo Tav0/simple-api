@@ -3,13 +3,13 @@ const passport = require('passport'),
     db = require('./models')
 
 passport.serializeUser(function(user, done) {
-    done(null, user);
+    done(null, user.id);
 });
 
-passport.deserializeUser(function(user, done) {
+passport.deserializeUser(function(userID, done) {
     db.User.findOne(
         {
-            where: { id: user.id }
+            where: { id: userID }
         }
     )
     .then(function(user) {

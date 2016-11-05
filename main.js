@@ -25,5 +25,4 @@ db
     })
     .catch(function(err) {
         throw Error(err);
-        //console.log(err);
     });
